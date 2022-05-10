@@ -1,7 +1,9 @@
 import { ArrowLeft, Camera } from "phosphor-react";
 import { FormEvent, useState } from "react";
 import { FeedbackType, feedbackTypes } from "..";
+import { api } from "../../../lib/api";
 import { CloseButton } from "../../CloseButton"
+import { Loading } from "../../Loading";
 import { ScreenshotButton } from "../ScreenshotButton";
 
 interface FeedbackContentStepProps {
@@ -10,17 +12,25 @@ interface FeedbackContentStepProps {
     onFeedbackSend: () => void;
 }
 
-export function FeedbackContentStep({ feedbackType, onFeedbackRestartRequested,onFeedbackSend }: FeedbackContentStepProps) {
+export function FeedbackContentStep({ feedbackType, onFeedbackRestartRequested, onFeedbackSend }: FeedbackContentStepProps) {
     const [screenshot, setSreenshot] = useState<string | null>(null);
-    const [coment, setComent] = useState("");
+    const [comment, setComment] = useState("");
+    const [isSendingFeedback, setIsSendingFeedback] = useState(false);
+
     const feedbackTypeInfo = feedbackTypes[feedbackType];
 
-    function handleSubmitFeedback(event : FormEvent){
+    async function handleSubmitFeedback(event: FormEvent) {
         event.preventDefault();
-        console.log(coment)
-        console.log(screenshot)
+        setIsSendingFeedback(true);
+        await api.post('/feedbacks', {
+            type: feedbackType,
+            comment,
+            screenshot
+        });
 
+        setIsSendingFeedback(false);
         onFeedbackSend();
+
     }
 
     return (
@@ -45,9 +55,9 @@ export function FeedbackContentStep({ feedbackType, onFeedbackRestartRequested,o
                 focus:border-brand-500 focus:ring-brand-500 focus:ring-1 resize-none
                 focus:outline-none  scrollbar-thumb-zinc-700 scrollbar-track-transparent 
                 scrollbar-thin"
-                    placeholder="Conte com detalhes oque está acontecendo..." 
-                    onChange={({target}) => setComent(target.value)}
-                    value={coment}
+                    placeholder="Conte com detalhes oque está acontecendo..."
+                    onChange={({ target }) => setComment(target.value)}
+                    value={comment}
                 />
 
                 <footer className="flex gap-2 mt-2">
@@ -57,14 +67,14 @@ export function FeedbackContentStep({ feedbackType, onFeedbackRestartRequested,o
                     />
                     <button
                         type="submit"
-                        disabled={coment.length === 0}
+                        disabled={comment.length === 0 || isSendingFeedback}
                         className="p-2 bg-brand-500 rounded-md border-transparent flex-1 flex 
                         justify-center items-center text-sm 
                         hover:bg-brand-300 focus:outline-none focus:ring-2 focus:ring-offset-2 
                         focus:ring-offset-zinc-900 focus:ring-brand-500 transition-colors
                         disabled:opacity-50 disabled:hover:bg-brand-500"
                     >
-                        Enviar Feedback
+                       {isSendingFeedback ? <Loading/> : "Enviar Feedback"}
                     </button>
                 </footer>
             </form>
